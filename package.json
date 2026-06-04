@@ -1,6 +1,6 @@
 {
     "name": "com.lambda-labs.unity-repl",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "displayName": "Unity REPL",
     "description": "An unrestricted, omniscient Unity interface for AI agents. Tokens map directly to C# execution on the Main Thread, bypassing rigid MCP/CLI abstractions to offer infinite control over the Editor and Runtime.",
     "unity": "2021.3",
