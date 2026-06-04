@@ -145,7 +145,7 @@ This package embeds the persistent REPL server seamlessly into your Unity Editor
    npx skills add ./Packages/com.lambda-labs.unity-repl
    ```
 
-3. **Verify.** With the Unity Editor open, invoke the skill from your agent (e.g. `/unity-repl what is the Unity version`).
+3. **Verify.** With the Unity Editor open, invoke the skill from your agent (e.g. `/unity-repl-gs what is the Unity version`).
 
 ### Non-interactive invocation
 

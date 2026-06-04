@@ -477,6 +477,44 @@ namespace LambdaLabs.UnityRepl.Editor.Transport
             }
         }
 
+        public bool ProbeHealthy()
+        {
+            if (!_ready)
+                return false;
+
+            _errorWriter.GetStringBuilder().Clear();
+
+            try
+            {
+                object compiled;
+                string partial;
+                if (!TryCompile("1+1", out compiled, out partial))
+                    return false;
+
+                var diagnostics = _errorWriter.ToString().Trim();
+                if (HasCompileErrors(diagnostics))
+                    return false;
+                if (!string.IsNullOrEmpty(partial))
+                    return false;
+
+                var del = compiled as Delegate;
+                if (del == null)
+                    return false;
+
+                var invokeArgs = new object[] { null };
+                del.DynamicInvoke(invokeArgs);
+                return invokeArgs[0]?.ToString() == "2";
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                _errorWriter.GetStringBuilder().Clear();
+            }
+        }
+
         /// <summary>
         /// Calls Mono.CSharp.Evaluator.Compile via reflection. Prefers the two-arg
         /// overload so the unparsed-tail signal (used for INCOMPLETE: classification)

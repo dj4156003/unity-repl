@@ -90,6 +90,7 @@ namespace LambdaLabs.UnityRepl.Editor.Transport
                     string text;
                     try { text = _evaluator.Validate(userCode); }
                     catch (Exception ex) { text = $"ERROR: {ex.Message}"; }
+                    ProbeAndResetIfUnhealthy(ref text);
                     WriteResponse(resPath, text);
                     continue;
                 }
@@ -115,6 +116,12 @@ namespace LambdaLabs.UnityRepl.Editor.Transport
                 }
                 else
                 {
+                    if (outcome.Kind == EvalOutcomeKind.Value)
+                    {
+                        var text = outcome.Text;
+                        ProbeAndResetIfUnhealthy(ref text);
+                        outcome = EvalOutcome.Value(text);
+                    }
                     WriteResponse(resPath, outcome.Text);
                 }
             }
@@ -133,6 +140,32 @@ namespace LambdaLabs.UnityRepl.Editor.Transport
 
             // 3. Drive any active coroutine.
             _pump.Tick();
+        }
+
+        private void ProbeAndResetIfUnhealthy(ref string text)
+        {
+            if (!ShouldProbeAfterFailure(text))
+                return;
+            if (_evaluator != null && _evaluator.ProbeHealthy())
+                return;
+
+            _evaluator = new CSharpEvaluator();
+            var resetStatus = _evaluator.IsReady
+                ? "[UnityREPL] evaluator reset after failed health check."
+                : $"[UnityREPL] evaluator reset attempted but initialization failed: {_evaluator.InitError}";
+            text = string.IsNullOrEmpty(text) ? resetStatus : text + "\n" + resetStatus;
+            Debug.LogWarning(resetStatus);
+        }
+
+        private static bool ShouldProbeAfterFailure(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+                return false;
+            var trimmed = text.TrimStart();
+            return trimmed.StartsWith("COMPILE ERROR", StringComparison.Ordinal)
+                || trimmed.StartsWith("ERROR", StringComparison.Ordinal)
+                || trimmed.StartsWith("RUNTIME ERROR", StringComparison.Ordinal)
+                || trimmed.StartsWith("INCOMPLETE", StringComparison.Ordinal);
         }
 
         /// <summary>
